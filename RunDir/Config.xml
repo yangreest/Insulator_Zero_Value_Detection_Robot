@@ -1,0 +1,21 @@
+<Config>
+	<DeviceControlBoard>
+		<Ip>192.168.11.111</Ip>
+		<Port>8234</Port>
+		<!-- 心跳间隔单位ms -->
+		<DeviceHeartBeat>200</DeviceHeartBeat>
+		<FactoryMode>0</FactoryMode>
+		
+		<!-- 向上时的舵机角度单位ms -->
+		<UpAngle>120</UpAngle>
+		<!-- 向下时的舵机角度单位ms -->
+		<DownAngle>160</DownAngle>		
+		<!-- 行走电机速度 0 低速，1 中速，2 高速-->
+		<WalkMotorSpeed>2</WalkMotorSpeed>
+	</DeviceControlBoard>
+	<Camera>
+		<Left>192.168.250.12</Left>
+		<Mid>192.168.250.13</Mid>
+		<Right>192.168.250.14</Right>
+	</Camera>
+</Config>
