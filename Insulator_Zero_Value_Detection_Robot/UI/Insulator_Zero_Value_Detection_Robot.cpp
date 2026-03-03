@@ -1,10 +1,14 @@
 #include "Insulator_Zero_Value_Detection_Robot.h"
-
 #include "Config/ConfigManager.h"
 #include "Log/ScanS_WriteLog.h"
 #include "Protocol/WHSDControlBoradProtocol.h"
 #include "Tools/Tools.h"
 #include <QTimer>
+#include <QScreen>
+#include <QApplication>
+#include <QMessageBox.h>
+#include <QDateTime>
+#include <QFileDialog.h>
 
 Insulator_Zero_Value_Detection_Robot::Insulator_Zero_Value_Detection_Robot(QWidget* parent)
 	: QMainWindow(parent)
@@ -22,6 +26,11 @@ Insulator_Zero_Value_Detection_Robot::~Insulator_Zero_Value_Detection_Robot()
 void Insulator_Zero_Value_Detection_Robot::InitUI()
 {
 	showMaximized();
+
+	ui.label_22->setVisible(false);
+	ui.label_10->setVisible(false);
+	ui.label_11->setVisible(false);
+	ui.pushButton_3->setVisible(false);
 }
 
 void Insulator_Zero_Value_Detection_Robot::InitParam()
@@ -29,6 +38,8 @@ void Insulator_Zero_Value_Detection_Robot::InitParam()
 	m_wSensorStatus = 0;
 
 	m_wSensorBat = 0;
+
+	m_strFileName = "C:";
 
 	m_wSensorResult = 0;
 	m_pDeviceLog = new CWriteLog(WHSD_Tools::GetAbsolutePath("Log\\DeviceLog.txt"), 10000, 250);
@@ -50,10 +61,10 @@ void Insulator_Zero_Value_Detection_Robot::InitParam()
 	auto pWHSDControlBoardProtocol = m_pWHSDControlBoardProtocol;
 	auto pDeviceCom = m_pComDevice;
 	pDeviceCom->SetParam(m_pConfig->m_memControlBoardConfig.m_strIp.c_str(),
-	                     m_pConfig->m_memControlBoardConfig.m_wPort);
+		m_pConfig->m_memControlBoardConfig.m_wPort);
 	pDeviceCom->RegisterReadDataCallBack(std::bind(&CWHSDControlBoardProtocol::ReceiveNewData,
-	                                               pWHSDControlBoardProtocol, std::placeholders::_1,
-	                                               std::placeholders::_2));
+		pWHSDControlBoardProtocol, std::placeholders::_1,
+		std::placeholders::_2));
 	pDeviceCom->RegisterConnectStatusCallBack(std::bind(
 		&Insulator_Zero_Value_Detection_Robot::ComDeviceConnectionChanged, this,
 		std::placeholders::_1, std::placeholders::_2, 0));
@@ -71,6 +82,22 @@ void Insulator_Zero_Value_Detection_Robot::InitParam()
 	//pWHSDControlBoardProtocol->RegisterXRaySendResult(xRayResult);
 	pDeviceCom->BeginWork();
 	pWHSDControlBoardProtocol->BeginWork();
+
+
+	m_strLeftIp = m_pConfig->m_memCCameraConfig.m_strLeftIp;
+	m_strRightIp = m_pConfig->m_memCCameraConfig.m_strRightIp;
+
+	m_pC1 = ICameraBase::GetCameraObj(0);
+	m_pC2 = ICameraBase::GetCameraObj(0);
+
+	auto handleR = reinterpret_cast<HWND>(ui.label_22->winId());// winId的功能是获取窗口句柄
+	auto handleL = reinterpret_cast<HWND>(ui.label_9->winId());
+
+	m_pC1->RegisterVideoViewHandle(handleL);
+	m_pC2->RegisterVideoViewHandle(handleR);
+
+	std::thread td(&Insulator_Zero_Value_Detection_Robot::CameraConnect, this);
+	td.detach();
 }
 
 void Insulator_Zero_Value_Detection_Robot::BindAction()
@@ -82,6 +109,9 @@ void Insulator_Zero_Value_Detection_Robot::BindAction()
 
 	connect(ui.pushButton, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_TurnOnAll_Click);
 	connect(ui.pushButton_2, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_TurnOffAll_Click);
+	connect(ui.pushButton_3, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_ZeroTest_Click);// 零值检测
+    connect(ui.pushButton_PS, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::captureCurrentWindow);
+    connect(ui.pushButton_SN, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_SetFileName_Click);
 }
 
 void Insulator_Zero_Value_Detection_Robot::CallBack_ControllerState(int t, const ControllerState* p)
@@ -92,7 +122,7 @@ void Insulator_Zero_Value_Detection_Robot::CallBack_ControllerState(int t, const
 
 void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 {
-	if (m_nTimeCount++ % 20 == 0)
+	if (m_nTimeCount++ % 10 == 0)
 	{
 		auto cmds = CWHSDControlBoardProtocol::SensorCmd(0, 2, 0);
 
@@ -104,9 +134,9 @@ void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 		m_pComDevice->Write(cmds.data(), cmds.size());
 
 
-		//cmds = CWHSDControlBoardProtocol::SensorCmd(0, 4, 0);
+		cmds = CWHSDControlBoardProtocol::SensorCmd(0, 4, 0);
 
-		//m_pComDevice->Write(cmds.data(), cmds.size());
+		m_pComDevice->Write(cmds.data(), cmds.size());
 	}
 	ControllerState tp;
 	{
@@ -129,43 +159,43 @@ void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 		switch (tp.dpad)
 		{
 		case 1:
-			{
-				auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
-				                                                 m_pConfig->m_memControlBoardConfig.m_cUpAngle);
-				m_pComDevice->Write(cmds.data(), cmds.size());
-				ui.label_2->setText("上");
-				break;
-			}
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
+				m_pConfig->m_memControlBoardConfig.m_cUpAngle);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("上");
+			break;
+		}
 		case 2:
-			{
-				auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x01,
-				                                                 m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
-				m_pComDevice->Write(cmds.data(), cmds.size());
-				ui.label_2->setText("右");
-				break;
-			}
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x01,
+				ui.checkBox->isChecked() ? 0 : m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("右");
+			break;
+		}
 		case 3:
-			{
-				auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
-				                                                 m_pConfig->m_memControlBoardConfig.m_cDownAngle);
-				m_pComDevice->Write(cmds.data(), cmds.size());
-				ui.label_2->setText("下");
-				break;
-			}
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
+				m_pConfig->m_memControlBoardConfig.m_cDownAngle);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("下");
+			break;
+		}
 		case 4:
-			{
-				auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x02,
-				                                                 m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
-				m_pComDevice->Write(cmds.data(), cmds.size());
-				ui.label_2->setText("左");
-				break;
-			}
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x02,
+				ui.checkBox->isChecked() ? 0 : m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("左");
+			break;
+		}
 		case 0:
 		default:
-			{
-				ui.label_2->setText("");
-				break;
-			}
+		{
+			ui.label_2->setText("");
+			break;
+		}
 		}
 	}
 	else if (m_nLastDir == 2 || m_nLastDir == 4)
@@ -185,29 +215,29 @@ void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 	{
 	case 0:
 	case 3:
-		{
-			strWalkingMotorStatus = "停止";
-			break;
-		}
+	{
+		strWalkingMotorStatus = "停止";
+		break;
+	}
 	case 1:
-		{
-			strWalkingMotorStatus = "右运行";
-			break;
-		}
+	{
+		strWalkingMotorStatus = "右运行";
+		break;
+	}
 	case 2:
-		{
-			strWalkingMotorStatus = "左运行";
-			break;
-		}
+	{
+		strWalkingMotorStatus = "左运行";
+		break;
+	}
 	case 4:
-		{
-			strWalkingMotorStatus = "故障";
-			break;
-		}
+	{
+		strWalkingMotorStatus = "故障";
+		break;
+	}
 	default:
-		{
-			break;
-		}
+	{
+		break;
+	}
 	}
 	ui.label->setText(QString::fromStdString(strWalkingMotorStatus));
 	strWalkingMotorStatus = "未知";
@@ -215,25 +245,25 @@ void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 	{
 	case 0:
 	case 3:
-		{
-			strWalkingMotorStatus = "停止";
-			break;
-		}
+	{
+		strWalkingMotorStatus = "停止";
+		break;
+	}
 	case 1:
 	case 2:
-		{
-			strWalkingMotorStatus = "运行中";
-			break;
-		}
+	{
+		strWalkingMotorStatus = "运行中";
+		break;
+	}
 	case 4:
-		{
-			strWalkingMotorStatus = "故障";
-			break;
-		}
+	{
+		strWalkingMotorStatus = "故障";
+		break;
+	}
 	default:
-		{
-			break;
-		}
+	{
+		break;
+	}
 	}
 
 	ui.label_6->setText(QString::fromStdString(strWalkingMotorStatus));
@@ -258,56 +288,56 @@ void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 	switch (m_wSensorStatus)
 	{
 	case 0:
-		{
-			ui.label_17->setText("待机");
-			break;
-		}
+	{
+		ui.label_17->setText("待机");
+		break;
+	}
 	case 1:
-		{
-			ui.label_17->setText("触发");
-			break;
-		}
+	{
+		ui.label_17->setText("触发");
+		break;
+	}
 	case 2:
-		{
-			ui.label_17->setText("触发完成");
-			break;
-		}
+	{
+		ui.label_17->setText("触发完成");
+		break;
+	}
 	case 3:
-		{
-			ui.label_17->setText("未找到设备");
-			break;
-		}
+	{
+		ui.label_17->setText("未找到设备");
+		break;
+	}
 	default:
-		{
-			break;
-		}
+	{
+		break;
+	}
 	}
 	switch (m_wSensorResult)
 	{
 	case 0:
-		{
-			ui.label_11->setText("零值");
-			break;
-		}
+	{
+		ui.label_11->setText("零值");
+		break;
+	}
 	case 1:
-		{
-			ui.label_11->setText("正常");
-			break;
-		}
+	{
+		ui.label_11->setText("正常");
+		break;
+	}
 	case 2:
-		{
-			ui.label_11->setText("未知");
-			break;
-		}
+	{
+		ui.label_11->setText("未知");
+		break;
+	}
 	case 3:
-		{
-			ui.label_11->setText("未找到设备");
-			break;
-		}
+	{
+		ui.label_11->setText("未找到设备");
+		break;
+	}
 	default:
-		{
-			break;
-		}
+	{
+		break;
+	}
 	}
 }
 
@@ -329,23 +359,75 @@ void Insulator_Zero_Value_Detection_Robot::CallBack_SensorValue(CSensorData* p)
 	switch (p->m_cCmd)
 	{
 	case 2:
-		{
-			m_wSensorStatus = p->m_wValue;
-			break;
-		}
+	{
+		m_wSensorStatus = p->m_wValue;
+		break;
+	}
 	case 3:
-		{
-			m_wSensorBat = p->m_wValue;
-			break;
-		}
+	{
+		m_wSensorBat = p->m_wValue;
+		break;
+	}
 	case 4:
+	{
+		m_wSensorResult = p->m_wValue;
+		break;
+	}
+	default:
+	{
+		break;
+	}
+	}
+}
+
+void Insulator_Zero_Value_Detection_Robot::CameraConnect()
+{
+	int initStatus = 0;
+	bool needBreak = false;
+	while (true)
+	{
+		if (needBreak)
 		{
-			m_wSensorResult = p->m_wValue;
 			break;
 		}
-	default:
+		switch (initStatus)
+		{
+		case 0:
+		{
+			if (m_pC1->Init({}))
+			{
+				initStatus = 1;
+			}
+			break;
+		}
+		case 1:
+		{
+			if (m_pC1->Connect(m_strLeftIp, 0, "", ""))
+			{
+				initStatus = 2;
+			}
+			break;
+		}
+		case 2:
+		{
+			if (m_pC2->Connect(m_strRightIp, 0, "", ""))
+			{
+				initStatus = 3;
+			}
+			break;
+		}
+		//case 3:
+		//{
+		//	if (m_pC3->Connect(m_strRightIp, 0, "", ""))
+		//	{
+		//		initStatus = 4;
+		//	}
+		//	break;
+		//}
+		default:
 		{
 			break;
+		}
 		}
 	}
 }
@@ -370,4 +452,70 @@ void Insulator_Zero_Value_Detection_Robot::On_TurnOffAll_Click()
 {
 	auto cmds = CWHSDControlBoardProtocol::TurnOffAll();
 	m_pComDevice->Write(cmds.data(), cmds.size());
+}
+
+void Insulator_Zero_Value_Detection_Robot::On_ZeroTest_Click()
+{
+	auto cmds = CWHSDControlBoardProtocol::SensorCmd(0, 1, 0);
+
+	m_pComDevice->Write(cmds.data(), cmds.size());
+}
+
+void Insulator_Zero_Value_Detection_Robot::captureCurrentWindow()
+{
+	// 获取当前窗口的句柄（Windows）/ID（Linux）
+	WId windowId = ui.label_9->winId();
+
+	// 获取当前窗口所在的屏幕
+	QScreen* screen = QApplication::screenAt(ui.label_9->pos());
+	if (!screen) {
+		screen = QApplication::primaryScreen();
+	}
+
+	// 截取指定窗口
+	QPixmap pixmap = screen->grabWindow(windowId);
+
+	// 保存截图
+	savePixmap(pixmap);
+}
+
+void Insulator_Zero_Value_Detection_Robot::On_SetFileName_Click()
+{
+	// 此处弹出对话框选择一个文件夹
+    QString filePath = QFileDialog::getExistingDirectory(this, "选择文件夹");
+    if (!filePath.isEmpty()) {
+		m_strFileName = filePath;
+		return;
+	}
+	QMessageBox::information(this, "提示", "文件保存失败");
+}
+
+// 保存截图到文件
+void Insulator_Zero_Value_Detection_Robot::savePixmap(const QPixmap& pixmap)
+{
+	if (pixmap.isNull()) {
+		QMessageBox::warning(this, "错误", "截图失败，像素数据为空");
+		return;
+	}
+
+	//// 弹出保存文件对话框
+	//QString filePath = QFileDialog::getSaveFileName(
+	//	this,
+	//	"保存截图",
+	//	QString("截图_%1.png").arg(QDateTime::currentDateTime().toString("yyyyMMddhhmmss")),
+	//	"PNG图片 (*.png);;JPG图片 (*.jpg);;BMP图片 (*.bmp)"
+	//);
+
+	QString filePath = QString("%1/%2.png").arg(m_strFileName).arg(QDateTime::currentDateTime().toString("yyyyMMddhhmmss"));
+
+	if (!filePath.isEmpty()) {
+		// 保存图片
+		bool success = pixmap.save(filePath);
+		if (success) {
+			QMessageBox::information(this, "成功", QString("截图已保存到：\n%1").arg(filePath));
+		}
+		else {
+			QMessageBox::warning(this, "错误", "截图保存失败");
+		}
+	}
 }

@@ -9,6 +9,7 @@
 #include "Log/ScanS_WriteLog.h"
 #include "Protocol/WHSDControlBoradProtocol.h"
 #include "Tools/XInputHelper.h"
+#include "Camera/CameraBase.h"
 
 class Insulator_Zero_Value_Detection_Robot : public QMainWindow
 {
@@ -21,6 +22,9 @@ private slots:
 	void On_timer_timeout();
 	void On_TurnOnAll_Click();
 	void On_TurnOffAll_Click();
+	void On_ZeroTest_Click();
+	void captureCurrentWindow();
+	void On_SetFileName_Click();
 
 private:
 	Ui::Insulator_Zero_Value_Detection_RobotClass ui;
@@ -40,6 +44,8 @@ private:
 	void RefreshControllerState(const ControllerState* p);
 
 	void CallBack_SensorValue(CSensorData* p);
+
+	void savePixmap(const QPixmap& pixmap);
 
 	ControllerState m_memControllerState;
 
@@ -78,4 +84,15 @@ private:
 	uint64_t m_nTimeCount;
 
 	bool m_bLastButton;
+
+	QString	m_strFileName;
+
+public:
+	// …„œÒÕ∑
+	void CameraConnect();
+	ICameraBase* m_pC1;
+	ICameraBase* m_pC2;
+
+	std::string m_strLeftIp;
+	std::string m_strRightIp;
 };

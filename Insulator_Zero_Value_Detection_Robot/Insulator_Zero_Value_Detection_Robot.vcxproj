@@ -67,7 +67,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>D:\3rd\XCloud\include</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>D:\3rd\XCloud\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XCloudSDK.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>
@@ -101,6 +106,8 @@
     <QtRcc Include="UI\Insulator_Zero_Value_Detection_Robot.qrc" />
     <QtUic Include="UI\Insulator_Zero_Value_Detection_Robot.ui" />
     <QtMoc Include="UI\Insulator_Zero_Value_Detection_Robot.h" />
+    <ClCompile Include="Camera\CameraBase.cpp" />
+    <ClCompile Include="Camera\XCloud.cpp" />
     <ClCompile Include="Config\ConfigManager.cpp" />
     <ClCompile Include="DeviceCom\IDeviceCom.cpp" />
     <ClCompile Include="DeviceCom\TcpClient.cpp" />
@@ -115,6 +122,8 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera\CameraBase.h" />
+    <ClInclude Include="Camera\XCloud.h" />
     <ClInclude Include="Config\ConfigManager.h" />
     <ClInclude Include="DeviceCom\IDeviceCom.h" />
     <ClInclude Include="DeviceCom\TcpClient.h" />
