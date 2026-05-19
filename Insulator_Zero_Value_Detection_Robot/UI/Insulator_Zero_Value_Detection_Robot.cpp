@@ -107,6 +107,11 @@ void Insulator_Zero_Value_Detection_Robot::BindAction()
 	connect(m_pTimer, &QTimer::timeout, this, &Insulator_Zero_Value_Detection_Robot::On_timer_timeout);
 	m_pTimer->start();
 
+	m_pTimerInput = new QTimer(this);
+	m_pTimerInput->setInterval(10);
+	connect(m_pTimerInput, &QTimer::timeout, this, &Insulator_Zero_Value_Detection_Robot::On_timerInput_timeout);
+	m_pTimerInput->start();
+
 	connect(ui.pushButton, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_TurnOnAll_Click);
 	connect(ui.pushButton_2, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_TurnOffAll_Click);
 	connect(ui.pushButton_3, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_ZeroTest_Click);// 零值检测
@@ -138,75 +143,7 @@ void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 
 		m_pComDevice->Write(cmds.data(), cmds.size());
 	}
-	ControllerState tp;
-	{
-		std::lock_guard<std::mutex> g(m_mutexXInput);
-		memcpy(&tp, &m_memControllerState, sizeof(ControllerState));
-	}
 
-
-	if (!m_bLastButton && tp.buttons[5])
-	{
-		auto cmds = CWHSDControlBoardProtocol::SensorCmd(0, 1, 0);
-
-		m_pComDevice->Write(cmds.data(), cmds.size());
-	}
-	m_bLastButton = tp.buttons[5];
-
-	ui.label_20->setText(m_bLastButton ? "ON" : "OFF");
-	if (m_nLastDir == 0)
-	{
-		switch (tp.dpad)
-		{
-		case 1:
-		{
-			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
-				m_pConfig->m_memControlBoardConfig.m_cUpAngle);
-			m_pComDevice->Write(cmds.data(), cmds.size());
-			ui.label_2->setText("上");
-			break;
-		}
-		case 2:
-		{
-			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x01,
-				ui.checkBox->isChecked() ? 0 : m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
-			m_pComDevice->Write(cmds.data(), cmds.size());
-			ui.label_2->setText("右");
-			break;
-		}
-		case 3:
-		{
-			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
-				m_pConfig->m_memControlBoardConfig.m_cDownAngle);
-			m_pComDevice->Write(cmds.data(), cmds.size());
-			ui.label_2->setText("下");
-			break;
-		}
-		case 4:
-		{
-			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x02,
-				ui.checkBox->isChecked() ? 0 : m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
-			m_pComDevice->Write(cmds.data(), cmds.size());
-			ui.label_2->setText("左");
-			break;
-		}
-		case 0:
-		default:
-		{
-			ui.label_2->setText("");
-			break;
-		}
-		}
-	}
-	else if (m_nLastDir == 2 || m_nLastDir == 4)
-	{
-		if (tp.dpad == 0)
-		{
-			auto cmds = CWHSDControlBoardProtocol::DeviceStop(0x01);
-			m_pComDevice->Write(cmds.data(), cmds.size());
-		}
-	}
-	m_nLastDir = tp.dpad;
 	ui.label_34->setText(QString::number(m_nHeartBeatCount));
 	ui.label_3->setText(m_bControlBroadConnected ? "已连接" : "未连接");
 	const auto memDeviceHeartBeat = m_memDeviceHeartBeat;
@@ -341,6 +278,78 @@ void Insulator_Zero_Value_Detection_Robot::On_timer_timeout()
 	}
 }
 
+void Insulator_Zero_Value_Detection_Robot::On_timerInput_timeout()
+{
+	ControllerState tp;
+	{
+		std::lock_guard<std::mutex> g(m_mutexXInput);
+		memcpy(&tp, &m_memControllerState, sizeof(ControllerState));
+	}
+
+
+	if (!m_bLastButton && tp.buttons[5])
+	{
+		auto cmds = CWHSDControlBoardProtocol::SensorCmd(0, 1, 0);
+
+		m_pComDevice->Write(cmds.data(), cmds.size());
+	}
+	m_bLastButton = tp.buttons[5];
+
+	ui.label_20->setText(m_bLastButton ? "ON" : "OFF");
+	if (m_nLastDir == 0)
+	{
+		switch (tp.dpad)
+		{
+		case 1:
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
+				m_pConfig->m_memControlBoardConfig.m_cUpAngle);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("上");
+			break;
+		}
+		case 2:
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x01,
+				ui.checkBox->isChecked() ? 0 : m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("右");
+			break;
+		}
+		case 3:
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
+				m_pConfig->m_memControlBoardConfig.m_cDownAngle);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("下");
+			break;
+		}
+		case 4:
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x01, 0b11, 0x02,
+				ui.checkBox->isChecked() ? 0 : m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+			ui.label_2->setText("左");
+			break;
+		}
+		case 0:
+		default:
+		{
+			ui.label_2->setText("");
+			break;
+		}
+		}
+	}
+	else if (m_nLastDir == 2 || m_nLastDir == 4)
+	{
+		if (tp.dpad == 0)
+		{
+			auto cmds = CWHSDControlBoardProtocol::DeviceStop(0x01);
+			m_pComDevice->Write(cmds.data(), cmds.size());
+		}
+	}
+	m_nLastDir = tp.dpad;
+}
 
 void Insulator_Zero_Value_Detection_Robot::ComDeviceConnectionChanged(const bool connected, int guid, int index)
 {

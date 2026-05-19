@@ -14,7 +14,7 @@
 		<WalkMotorSpeed>2</WalkMotorSpeed>
 	</DeviceControlBoard>
 	<Camera>
-		<Left>192.168.11.11</Left>
+		<Left>192.168.1.10</Left>
 		<Mid>192.168.250.13</Mid>
 		<Right>192.168.250.14</Right>
 	</Camera>

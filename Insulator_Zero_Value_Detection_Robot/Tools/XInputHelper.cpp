@@ -113,7 +113,7 @@ void CXInputHelper::LoopGetHandleValue()
 {
 	while (!m_bIsNeedExit)
 	{
-		Sleep(100);
+		Sleep(10);
 		if (ReadControllerState() && m_function_ControllerStateCallBack != nullptr)
 		{
 			m_function_ControllerStateCallBack(m_nHandleIndex, &m_memControllerState);

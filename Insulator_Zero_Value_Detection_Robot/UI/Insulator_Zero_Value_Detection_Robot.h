@@ -20,6 +20,7 @@ public:
 	~Insulator_Zero_Value_Detection_Robot();
 private slots:
 	void On_timer_timeout();
+	void On_timerInput_timeout();
 	void On_TurnOnAll_Click();
 	void On_TurnOffAll_Click();
 	void On_ZeroTest_Click();
@@ -72,6 +73,7 @@ private:
 	std::mutex m_mutexXInput;
 
 	QTimer* m_pTimer;
+	QTimer* m_pTimerInput;
 
 	int m_nLastDir;
 
