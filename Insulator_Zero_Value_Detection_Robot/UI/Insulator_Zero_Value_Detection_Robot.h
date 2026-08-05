@@ -1,5 +1,4 @@
 #pragma once
-
 #include <mutex>
 #include <QtWidgets/QMainWindow>
 #include "ui_Insulator_Zero_Value_Detection_Robot.h"
@@ -10,6 +9,8 @@
 #include "Protocol/WHSDControlBoradProtocol.h"
 #include "Tools/XInputHelper.h"
 #include "Camera/CameraBase.h"
+#include "Config/XmlManagerWindow.h"
+#include <opencv2/opencv.hpp>
 
 class Insulator_Zero_Value_Detection_Robot : public QMainWindow
 {
@@ -18,12 +19,16 @@ class Insulator_Zero_Value_Detection_Robot : public QMainWindow
 public:
 	Insulator_Zero_Value_Detection_Robot(QWidget* parent = nullptr);
 	~Insulator_Zero_Value_Detection_Robot();
+	// 在头文件中声明函数
+	static QImage Mat2QImage(const cv::Mat& mat);
+
 private slots:
 	void On_timer_timeout();
 	void On_timerInput_timeout();
 	void On_TurnOnAll_Click();
 	void On_TurnOffAll_Click();
 	void On_ZeroTest_Click();
+	void On_Setting_Click();
 	void captureCurrentWindow();
 	void On_SetFileName_Click();
 
@@ -60,6 +65,8 @@ private:
 
 	CWHSDControlBoardProtocol* m_pWHSDControlBoardProtocol;
 
+	XmlManagerWindow* xmlManagerWindow;
+
 	std::mutex m_mutexDeviceInfoLock;
 
 	CDeviceHeartBeat m_memDeviceHeartBeat;
@@ -89,9 +96,12 @@ private:
 
 	QString	m_strFileName;
 
+	bool continueStreaming;
+
 public:
-	// ����ͷ
+	// 摄像头
 	void CameraConnect();
+	void NewCameraConnect();
 	ICameraBase* m_pC1;
 	ICameraBase* m_pC2;
 

@@ -1,21 +1,21 @@
 <Config>
-	<DeviceControlBoard>
-		<Ip>192.168.11.111</Ip>
-		<Port>8234</Port>
-		<!-- 心跳间隔单位ms -->
-		<DeviceHeartBeat>200</DeviceHeartBeat>
-		<FactoryMode>0</FactoryMode>
-		
-		<!-- 向上时的舵机角度单位ms -->
-		<UpAngle>120</UpAngle>
-		<!-- 向下时的舵机角度单位ms -->
-		<DownAngle>160</DownAngle>		
-		<!-- 行走电机速度 0 低速，1 中速，2 高速-->
-		<WalkMotorSpeed>2</WalkMotorSpeed>
-	</DeviceControlBoard>
-	<Camera>
-		<Left>192.168.1.10</Left>
-		<Mid>192.168.250.13</Mid>
-		<Right>192.168.250.14</Right>
-	</Camera>
+    <DeviceControlBoard>
+        <Ip>127.0.0.1</Ip>
+        <Port>8887</Port>
+        <DeviceHeartBeat>200</DeviceHeartBeat>
+        <FactoryMode>0</FactoryMode>
+        <UpAngle>120</UpAngle>
+        <DownAngle>160</DownAngle>
+        <WalkMotorSpeed>0</WalkMotorSpeed>
+        <UpAngle2>100</UpAngle2>
+    </DeviceControlBoard>
+    <Camera>
+        <Left>192.168.1.10</Left>
+        <Mid>192.168.250.13</Mid>
+        <Right>192.168.250.14</Right>
+        <NewCamera>1</NewCamera>
+        <UseMainSp>0</UseMainSp>
+        <MainRtsp>rtsp://admin:123456@192.168.1.123/stream0</MainRtsp>
+        <SubRtsp>rtsp://admin:123456@192.168.1.123/stream1</SubRtsp>
+    </Camera>
 </Config>

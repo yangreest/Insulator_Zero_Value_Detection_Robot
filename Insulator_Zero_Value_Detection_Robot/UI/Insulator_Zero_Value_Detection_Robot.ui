@@ -15,7 +15,7 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="styleSheet">
-    <string notr="true">background-color: #404040;color:#fff</string>
+    <string notr="true">background-color: #404040;color:#ffffff</string>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
@@ -56,89 +56,8 @@ QGroupBox QPushButton {
        <string>设备</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="7" column="0">
-        <widget class="QLabel" name="label_7">
-         <property name="font">
-          <font>
-           <pointsize>-1</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>总电源：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <widget class="QLabel" name="label_16">
-         <property name="text">
-          <string>测量模块状态：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <widget class="QLabel" name="label_17">
-         <property name="text">
-          <string>-</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1">
-        <widget class="QLabel" name="label_15">
-         <property name="text">
-          <string>-</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_12">
-         <property name="font">
-          <font>
-           <pointsize>-1</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>机器人电池电量：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_19">
-         <property name="font">
-          <font>
-           <pointsize>-1</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>行走电机：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_21">
-         <property name="font">
-          <font>
-           <pointsize>-1</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>连接状态：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QLabel" name="label_34">
-         <property name="font">
-          <font>
-           <pointsize>-1</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QLabel" name="label_13">
+       <item row="7" column="1">
+        <widget class="QLabel" name="label_8">
          <property name="font">
           <font>
            <pointsize>-1</pointsize>
@@ -161,6 +80,56 @@ QGroupBox QPushButton {
          </property>
         </widget>
        </item>
+       <item row="9" column="0">
+        <widget class="QPushButton" name="pushButton">
+         <property name="font">
+          <font>
+           <pointsize>-1</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>总电源开</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="font">
+          <font>
+           <pointsize>-1</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>总电源：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_3">
+         <property name="font">
+          <font>
+           <pointsize>-1</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>未连接</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QCheckBox" name="checkBox">
+         <property name="text">
+          <string>低速</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QLabel" name="label_15">
+         <property name="text">
+          <string>-</string>
+         </property>
+        </widget>
+       </item>
        <item row="9" column="1">
         <widget class="QPushButton" name="pushButton_2">
          <property name="font">
@@ -173,27 +142,27 @@ QGroupBox QPushButton {
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_4">
+       <item row="2" column="1">
+        <widget class="QLabel" name="label_6">
          <property name="font">
           <font>
            <pointsize>-1</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>舵机：</string>
+          <string>-</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="0">
-        <widget class="QPushButton" name="pushButton">
+       <item row="3" column="1">
+        <widget class="QLabel" name="label_34">
          <property name="font">
           <font>
            <pointsize>-1</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>总电源开</string>
+          <string>0</string>
          </property>
         </widget>
        </item>
@@ -209,8 +178,20 @@ QGroupBox QPushButton {
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
-        <widget class="QLabel" name="label_8">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_19">
+         <property name="font">
+          <font>
+           <pointsize>-1</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>行走电机：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLabel" name="label_13">
          <property name="font">
           <font>
            <pointsize>-1</pointsize>
@@ -228,34 +209,65 @@ QGroupBox QPushButton {
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_3">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_21">
          <property name="font">
           <font>
            <pointsize>-1</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>未连接</string>
+          <string>连接状态：</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
-        <widget class="QLabel" name="label_6">
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_12">
          <property name="font">
           <font>
            <pointsize>-1</pointsize>
           </font>
          </property>
+         <property name="text">
+          <string>机器人电池电量：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label_16">
+         <property name="text">
+          <string>测量模块状态：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLabel" name="label_17">
          <property name="text">
           <string>-</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="0">
-        <widget class="QCheckBox" name="checkBox">
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="font">
+          <font>
+           <pointsize>-1</pointsize>
+          </font>
+         </property>
          <property name="text">
-          <string>低速</string>
+          <string>舵机：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QPushButton" name="pushButton_4">
+         <property name="font">
+          <font>
+           <pointsize>-1</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>设置</string>
          </property>
         </widget>
        </item>

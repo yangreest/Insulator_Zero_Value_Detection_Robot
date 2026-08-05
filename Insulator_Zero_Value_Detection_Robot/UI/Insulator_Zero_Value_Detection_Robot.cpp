@@ -1,5 +1,6 @@
 #include "Insulator_Zero_Value_Detection_Robot.h"
 #include "Config/ConfigManager.h"
+
 #include "Log/ScanS_WriteLog.h"
 #include "Protocol/WHSDControlBoradProtocol.h"
 #include "Tools/Tools.h"
@@ -21,6 +22,7 @@ Insulator_Zero_Value_Detection_Robot::Insulator_Zero_Value_Detection_Robot(QWidg
 
 Insulator_Zero_Value_Detection_Robot::~Insulator_Zero_Value_Detection_Robot()
 {
+	continueStreaming = false;
 }
 
 void Insulator_Zero_Value_Detection_Robot::InitUI()
@@ -30,6 +32,7 @@ void Insulator_Zero_Value_Detection_Robot::InitUI()
 	ui.label_22->setVisible(false);
 	ui.label_10->setVisible(false);
 	ui.label_11->setVisible(false);
+	//ui.pushButton_4->setVisible(false);
 	ui.pushButton_3->setVisible(false);
 }
 
@@ -40,6 +43,9 @@ void Insulator_Zero_Value_Detection_Robot::InitParam()
 	m_wSensorBat = 0;
 
 	m_strFileName = "C:";
+
+	// 使用标志位控制循环
+	continueStreaming = true;
 
 	m_wSensorResult = 0;
 	m_pDeviceLog = new CWriteLog(WHSD_Tools::GetAbsolutePath("Log\\DeviceLog.txt"), 10000, 250);
@@ -52,7 +58,7 @@ void Insulator_Zero_Value_Detection_Robot::InitParam()
 		std::placeholders::_2));
 	m_pXInputHelper->BeginWork();
 
-	//鍏堝垵濮嬪寲涓绘帶鍒舵澘
+	// 获取设备信息
 
 	m_pComDevice = IDeviceCom::GetIDeviceCom(1);
 	m_pWHSDControlBoardProtocol = new CWHSDControlBoardProtocol(
@@ -83,21 +89,29 @@ void Insulator_Zero_Value_Detection_Robot::InitParam()
 	pDeviceCom->BeginWork();
 	pWHSDControlBoardProtocol->BeginWork();
 
+	if (m_pConfig->m_memCCameraConfig.m_bNewCamera)
+	{
+		std::thread td(&Insulator_Zero_Value_Detection_Robot::NewCameraConnect, this);
+		td.detach();
+	}
+	else
+	{
+		m_strLeftIp = m_pConfig->m_memCCameraConfig.m_strLeftIp;
+		m_strRightIp = m_pConfig->m_memCCameraConfig.m_strRightIp;
 
-	m_strLeftIp = m_pConfig->m_memCCameraConfig.m_strLeftIp;
-	m_strRightIp = m_pConfig->m_memCCameraConfig.m_strRightIp;
+		m_pC1 = ICameraBase::GetCameraObj(0);
+		m_pC2 = ICameraBase::GetCameraObj(0);
 
-	m_pC1 = ICameraBase::GetCameraObj(0);
-	m_pC2 = ICameraBase::GetCameraObj(0);
+		auto handleR = reinterpret_cast<HWND>(ui.label_22->winId());// winId的功能是获取窗口句柄
+		auto handleL = reinterpret_cast<HWND>(ui.label_9->winId());
 
-	auto handleR = reinterpret_cast<HWND>(ui.label_22->winId());// winId的功能是获取窗口句柄
-	auto handleL = reinterpret_cast<HWND>(ui.label_9->winId());
+		m_pC1->RegisterVideoViewHandle(handleL);
+		m_pC2->RegisterVideoViewHandle(handleR);
 
-	m_pC1->RegisterVideoViewHandle(handleL);
-	m_pC2->RegisterVideoViewHandle(handleR);
+		std::thread td(&Insulator_Zero_Value_Detection_Robot::CameraConnect, this);
+		td.detach();
+	}
 
-	std::thread td(&Insulator_Zero_Value_Detection_Robot::CameraConnect, this);
-	td.detach();
 }
 
 void Insulator_Zero_Value_Detection_Robot::BindAction()
@@ -115,8 +129,9 @@ void Insulator_Zero_Value_Detection_Robot::BindAction()
 	connect(ui.pushButton, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_TurnOnAll_Click);
 	connect(ui.pushButton_2, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_TurnOffAll_Click);
 	connect(ui.pushButton_3, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_ZeroTest_Click);// 零值检测
-    connect(ui.pushButton_PS, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::captureCurrentWindow);
-    connect(ui.pushButton_SN, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_SetFileName_Click);
+	connect(ui.pushButton_4, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_Setting_Click);
+	connect(ui.pushButton_PS, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::captureCurrentWindow);
+	connect(ui.pushButton_SN, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_SetFileName_Click);
 }
 
 void Insulator_Zero_Value_Detection_Robot::CallBack_ControllerState(int t, const ControllerState* p)
@@ -300,12 +315,12 @@ void Insulator_Zero_Value_Detection_Robot::On_timerInput_timeout()
 	{
 		switch (tp.dpad)
 		{
-		case 1:
+		case 1: // 探针向内
 		{
 			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
 				m_pConfig->m_memControlBoardConfig.m_cUpAngle);
 			m_pComDevice->Write(cmds.data(), cmds.size());
-			ui.label_2->setText("上");
+			ui.label_2->setText("内上");
 			break;
 		}
 		case 2:
@@ -316,12 +331,12 @@ void Insulator_Zero_Value_Detection_Robot::On_timerInput_timeout()
 			ui.label_2->setText("右");
 			break;
 		}
-		case 3:
+		case 3: // 探针方平
 		{
 			auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
 				m_pConfig->m_memControlBoardConfig.m_cDownAngle);
 			m_pComDevice->Write(cmds.data(), cmds.size());
-			ui.label_2->setText("下");
+			ui.label_2->setText("外下");
 			break;
 		}
 		case 4:
@@ -330,6 +345,14 @@ void Insulator_Zero_Value_Detection_Robot::On_timerInput_timeout()
 				ui.checkBox->isChecked() ? 0 : m_pConfig->m_memControlBoardConfig.m_cWalkMotorSpeed);
 			m_pComDevice->Write(cmds.data(), cmds.size());
 			ui.label_2->setText("左");
+			break;
+		}
+		case 5: // 探针向外
+		{
+            auto cmds = CWHSDControlBoardProtocol::DeviceRun(0x05, 0b11, 0x01,
+				m_pConfig->m_memControlBoardConfig.m_cUpAngle2);
+            m_pComDevice->Write(cmds.data(), cmds.size());
+            ui.label_2->setText("外上");
 			break;
 		}
 		case 0:
@@ -358,7 +381,7 @@ void Insulator_Zero_Value_Detection_Robot::ComDeviceConnectionChanged(const bool
 
 void Insulator_Zero_Value_Detection_Robot::RefreshControllerState(const ControllerState* p)
 {
-	//鐩存帴灏嗗€兼嫹璐濊繃鏉?
+	// 刷新控制器状态
 	std::lock_guard<std::mutex> g(m_mutexXInput);
 	memcpy(&m_memControllerState, p, sizeof(ControllerState));
 }
@@ -441,6 +464,128 @@ void Insulator_Zero_Value_Detection_Robot::CameraConnect()
 	}
 }
 
+void Insulator_Zero_Value_Detection_Robot::NewCameraConnect()
+{
+	// 使用项目配置管理器获取RTSP参数
+
+	std::string rtsp_url;
+	if (m_pConfig->m_memCCameraConfig.m_bUseMainSp)
+	{
+		rtsp_url = m_pConfig->m_memCCameraConfig.m_strMainRtsp;
+	}
+	else
+	{
+		rtsp_url = m_pConfig->m_memCCameraConfig.m_strSubRtsp;
+	}
+
+	cv::VideoCapture cap;
+
+	// 设置低延迟参数
+	cap.set(cv::CAP_PROP_BUFFERSIZE, 1);  // 最小化缓冲区
+
+	// 尝试打开RTSP流
+	bool isOpen = cap.open(rtsp_url, cv::CAP_FFMPEG);
+
+	if (!isOpen)
+	{
+		qDebug() << "Failed to open RTSP stream: " << rtsp_url;
+		return; // 不应该返回-1，因为这不是main函数
+	}
+
+	cv::Mat frame;
+
+
+	while (continueStreaming)
+	{
+		// 低延迟处理：获取最新帧
+		if (cap.grab())
+		{
+			cap.retrieve(frame);
+
+			if (!frame.empty())
+			{
+				//cv::imshow("RTSP Low Delay", frame);
+				// 将frame 转成QImage显示在lable上
+                QImage qImg = Mat2QImage(frame);
+                ui.label->setPixmap(QPixmap::fromImage(qImg));
+
+				//// 检查退出条件
+				//int key = cv::waitKey(1) & 0xFF;
+				//if (key == 27) // ESC键退出
+				//{
+				//	break;
+				//}
+			}
+			else
+			{
+				qDebug() << "Frame is empty";
+				break;
+			}
+		}
+		else
+		{
+			qDebug() << "Failed to grab frame";
+			break;
+		}
+	}
+	// 清理资源
+	cap.release();
+}
+
+
+
+// 函数实现
+QImage Insulator_Zero_Value_Detection_Robot::Mat2QImage(const cv::Mat& mat)
+{
+    // 处理空矩阵
+    if (mat.empty()) {
+        return QImage();
+    }
+
+    // 如果是彩色图像（BGR -> RGB）
+    if (mat.channels() == 3) {
+        cv::Mat rgb;
+        cv::cvtColor(mat, rgb, cv::COLOR_BGR2RGB);
+        return QImage((const unsigned char*)rgb.data, 
+                     rgb.cols, 
+                     rgb.rows, 
+                     rgb.step, 
+                     QImage::Format_RGB888);
+    }
+    // 如果是灰度图像
+    else if (mat.channels() == 1) {
+        return QImage((const unsigned char*)mat.data,
+                     mat.cols,
+                     mat.rows,
+                     mat.step,
+                     QImage::Format_Grayscale8); // Qt 5.13+ 支持，更早版本可用 Format_Indexed8
+    }
+    // 如果是RGBA图像
+    else if (mat.channels() == 4) {
+        cv::Mat rgba;
+        cv::cvtColor(mat, rgba, cv::COLOR_BGRA2RGBA);
+        return QImage((const unsigned char*)rgba.data,
+                     rgba.cols,
+                     rgba.rows,
+                     rgba.step,
+                     QImage::Format_RGBA8888);
+    }
+    
+    // 对于其他通道数，先转换为RGB
+    cv::Mat rgb;
+    if (mat.channels() == 3) {
+        cv::cvtColor(mat, rgb, cv::COLOR_BGR2RGB);
+    } else {
+        cv::cvtColor(mat, rgb, cv::COLOR_GRAY2RGB);
+    }
+    
+    return QImage((const unsigned char*)rgb.data,
+                 rgb.cols,
+                 rgb.rows,
+                 rgb.step,
+                 QImage::Format_RGB888);
+}
+
 void Insulator_Zero_Value_Detection_Robot::Callback_DeviceHeartBeat(const CDeviceHeartBeat& b, int nComdeviceIndex)
 {
 	m_mutexDeviceInfoLock.lock();
@@ -470,6 +615,15 @@ void Insulator_Zero_Value_Detection_Robot::On_ZeroTest_Click()
 	m_pComDevice->Write(cmds.data(), cmds.size());
 }
 
+void Insulator_Zero_Value_Detection_Robot::On_Setting_Click()
+{
+	if (xmlManagerWindow == nullptr)
+	{
+		xmlManagerWindow = new XmlManagerWindow();
+	}
+	xmlManagerWindow->show();
+}
+
 void Insulator_Zero_Value_Detection_Robot::captureCurrentWindow()
 {
 	// 获取当前窗口的句柄（Windows）/ID（Linux）
@@ -491,8 +645,8 @@ void Insulator_Zero_Value_Detection_Robot::captureCurrentWindow()
 void Insulator_Zero_Value_Detection_Robot::On_SetFileName_Click()
 {
 	// 此处弹出对话框选择一个文件夹
-    QString filePath = QFileDialog::getExistingDirectory(this, "选择文件夹");
-    if (!filePath.isEmpty()) {
+	QString filePath = QFileDialog::getExistingDirectory(this, "选择文件夹");
+	if (!filePath.isEmpty()) {
 		m_strFileName = filePath;
 		return;
 	}

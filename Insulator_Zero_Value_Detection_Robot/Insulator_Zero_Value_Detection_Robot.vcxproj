@@ -41,7 +41,7 @@
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
-    <QtInstall>6.9.1_msvc2022_64</QtInstall>
+    <QtInstall>6.10_msvc2022_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
@@ -67,11 +67,11 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>D:\3rd\XCloud\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\3rd\XCloud\include;D:\3rd\opencv_4_12_0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>D:\3rd\XCloud\lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XCloudSDK.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\3rd\XCloud\lib;D:\3rd\opencv_4_12_0\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XCloudSDK.lib;opencv_world4120.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -104,11 +104,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <QtRcc Include="UI\Insulator_Zero_Value_Detection_Robot.qrc" />
+    <QtUic Include="Config\XmlConfigManager.ui" />
     <QtUic Include="UI\Insulator_Zero_Value_Detection_Robot.ui" />
     <QtMoc Include="UI\Insulator_Zero_Value_Detection_Robot.h" />
     <ClCompile Include="Camera\CameraBase.cpp" />
     <ClCompile Include="Camera\XCloud.cpp" />
     <ClCompile Include="Config\ConfigManager.cpp" />
+    <ClCompile Include="Config\XmlManagerWindow.cpp" />
     <ClCompile Include="DeviceCom\IDeviceCom.cpp" />
     <ClCompile Include="DeviceCom\TcpClient.cpp" />
     <ClCompile Include="Log\ScanS_FC.cpp" />
@@ -125,6 +127,7 @@
     <ClInclude Include="Camera\CameraBase.h" />
     <ClInclude Include="Camera\XCloud.h" />
     <ClInclude Include="Config\ConfigManager.h" />
+    <QtMoc Include="Config\XmlManagerWindow.h" />
     <ClInclude Include="DeviceCom\IDeviceCom.h" />
     <ClInclude Include="DeviceCom\TcpClient.h" />
     <ClInclude Include="Log\ScanS_FC.h" />
