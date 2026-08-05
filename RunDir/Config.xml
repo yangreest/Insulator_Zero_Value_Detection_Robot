@@ -10,7 +10,7 @@
         <UpAngle2>100</UpAngle2>
     </DeviceControlBoard>
     <Camera>
-        <Left>192.168.1.10</Left>
+        <Left>192.168.11.11</Left>
         <Mid>192.168.250.13</Mid>
         <Right>192.168.250.14</Right>
         <NewCamera>1</NewCamera>

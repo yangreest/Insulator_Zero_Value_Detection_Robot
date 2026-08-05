@@ -89,12 +89,12 @@ void Insulator_Zero_Value_Detection_Robot::InitParam()
 	pDeviceCom->BeginWork();
 	pWHSDControlBoardProtocol->BeginWork();
 
-	if (m_pConfig->m_memCCameraConfig.m_bNewCamera)
-	{
-		std::thread td(&Insulator_Zero_Value_Detection_Robot::NewCameraConnect, this);
-		td.detach();
-	}
-	else
+	//if (m_pConfig->m_memCCameraConfig.m_bNewCamera)
+	//{
+	//	std::thread td(&Insulator_Zero_Value_Detection_Robot::NewCameraConnect, this);
+	//	td.detach();
+	//}
+	//else
 	{
 		m_strLeftIp = m_pConfig->m_memCCameraConfig.m_strLeftIp;
 		m_strRightIp = m_pConfig->m_memCCameraConfig.m_strRightIp;

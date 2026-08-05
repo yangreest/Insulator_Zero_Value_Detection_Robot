@@ -6,3 +6,5 @@
 *.pdb
 /Insulator_Zero_Value_Detection_Robot/x64
 /.vs
+*.exe
+/RunDir/Insulator_Zero_Value_Detection_Robot.exe
