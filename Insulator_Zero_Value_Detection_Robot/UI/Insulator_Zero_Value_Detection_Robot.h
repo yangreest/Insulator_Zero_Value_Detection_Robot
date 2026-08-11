@@ -31,6 +31,7 @@ private slots:
 	void On_Setting_Click();
 	void captureCurrentWindow();
 	void On_SetFileName_Click();
+	void On_ReFreshCamera_Click();
 
 private:
 	Ui::Insulator_Zero_Value_Detection_RobotClass ui;
@@ -97,6 +98,8 @@ private:
 	QString	m_strFileName;
 
 	bool continueStreaming;
+
+	int initStatus = 0;
 
 public:
 	// 摄像头

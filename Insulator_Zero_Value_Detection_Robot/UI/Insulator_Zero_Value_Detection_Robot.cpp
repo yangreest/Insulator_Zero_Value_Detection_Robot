@@ -132,6 +132,7 @@ void Insulator_Zero_Value_Detection_Robot::BindAction()
 	connect(ui.pushButton_4, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_Setting_Click);
 	connect(ui.pushButton_PS, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::captureCurrentWindow);
 	connect(ui.pushButton_SN, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_SetFileName_Click);
+	connect(ui.pushButton_5, &QPushButton::clicked, this, &Insulator_Zero_Value_Detection_Robot::On_ReFreshCamera_Click);
 }
 
 void Insulator_Zero_Value_Detection_Robot::CallBack_ControllerState(int t, const ControllerState* p)
@@ -414,7 +415,7 @@ void Insulator_Zero_Value_Detection_Robot::CallBack_SensorValue(CSensorData* p)
 
 void Insulator_Zero_Value_Detection_Robot::CameraConnect()
 {
-	int initStatus = 0;
+	initStatus = 0;
 	bool needBreak = false;
 	while (true)
 	{
@@ -426,28 +427,42 @@ void Insulator_Zero_Value_Detection_Robot::CameraConnect()
 		{
 		case 0:
 		{
+			ui.label_9->setText("初始化中..");
 			if (m_pC1->Init({}))
 			{
+				ui.label_9->setText("初始化完成");
 				initStatus = 1;
 			}
 			break;
 		}
 		case 1:
 		{
+			ui.label_9->setText("连接中..");
 			if (m_pC1->Connect(m_strLeftIp, 0, "", ""))
 			{
+				ui.label_9->setText("连接成功");
 				initStatus = 2;
 			}
 			break;
 		}
-		case 2:
+		case 3:
 		{
-			if (m_pC2->Connect(m_strRightIp, 0, "", ""))
+			ui.label_9->setText("断开中..");
+			if(m_pC1->Deinit())
 			{
-				initStatus = 3;
+				ui.label_9->setText("断开成功");
+				initStatus = 0;
 			}
 			break;
 		}
+		// case 2:
+		// {
+		// 	if (m_pC2->Connect(m_strRightIp, 0, "", ""))
+		// 	{
+		// 		initStatus = 3;
+		// 	}
+		// 	break;
+		// }
 		//case 3:
 		//{
 		//	if (m_pC3->Connect(m_strRightIp, 0, "", ""))
@@ -461,6 +476,7 @@ void Insulator_Zero_Value_Detection_Robot::CameraConnect()
 			break;
 		}
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 }
 
@@ -651,6 +667,14 @@ void Insulator_Zero_Value_Detection_Robot::On_SetFileName_Click()
 		return;
 	}
 	QMessageBox::information(this, "提示", "文件保存失败");
+}
+
+void Insulator_Zero_Value_Detection_Robot::On_ReFreshCamera_Click()
+{
+	if (initStatus == 2)
+	{
+		initStatus = 3;
+	}
 }
 
 // 保存截图到文件
